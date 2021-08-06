@@ -161,6 +161,7 @@ router.delete(':key', function (req, res) {
 `);
 //**/
 
+//update labeling category with mappingId and mappingName
 router.patch('fullpath/:key', function (req, res) {
   const key = req.pathParams.key;
   const patchData = req.body;
