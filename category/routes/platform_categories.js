@@ -165,7 +165,7 @@ router.patch('fullpath/:key', function (req, res) {
   const key = req.pathParams.key;
   const patchData = req.body;
   let platform_category
-  try {//query leaf node by _key
+  try {
     platform_categories.update(key, patchData);//update first
     platform_category = platform_categories.document(key);
   } catch (e) {
