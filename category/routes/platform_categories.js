@@ -199,7 +199,7 @@ router.patch('fullpath/:key', function (req, res) {
     }else{
       var node = parentNodes[0];
       pid = node.pid
-      fullnames.push(node.name);
+      fullnames = fullnames.concat(node.name.split("/"));//name切分为单个字符串
       fullids.push(node.id);
     }
   }while(!isRoot);
@@ -218,7 +218,6 @@ router.patch('fullpath/:key', function (req, res) {
     }
     throw e;
   }
-
   res.send(platform_category);
 }, 'fullpath')
 .pathParam('key', keySchema)
