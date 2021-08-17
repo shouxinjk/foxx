@@ -8,6 +8,7 @@ const createRouter = require('@arangodb/foxx/router');
 const Persona = require('../models/persona');
 
 const personas = module.context.collection('personas');
+//const personas = db._collection('persona_personas');
 const keySchema = joi.string().required()
 .description('The key of the persona');
 
@@ -34,6 +35,7 @@ router.get(function (req, res) {
 `);
 //**/
 
+/**
 router.post(function (req, res) {
   const persona = req.body;
   let meta;
@@ -60,7 +62,52 @@ router.post(function (req, res) {
   Creates a new persona from the request body and
   returns the saved document.
 `);
+//**/
 
+//**
+//create a new persona with doc
+router.post(':key', function (req, res) {
+  const key = req.pathParams.key;
+  const patchData = req.body;
+  let persona;
+  //step 1:create blank doc
+  try {
+    personas.save({//新建时只能包含 _key 一个字段
+      _key:key
+    },{//必须先创建完成
+      waitForSync: true
+    });
+  } catch (e) {
+    if (e.isArangoError && e.errorNum === ARANGO_DUPLICATE) {
+      throw httpError(HTTP_CONFLICT, e.message);
+    }
+    throw e;
+  }
+
+  //step 2:update doc
+  try {
+    personas.update(key, patchData);
+    persona = personas.document(key);
+  } catch (e) {
+    if (e.isArangoError && e.errorNum === ARANGO_NOT_FOUND) {
+      throw httpError(HTTP_NOT_FOUND, e.message);
+    }
+    if (e.isArangoError && e.errorNum === ARANGO_CONFLICT) {
+      throw httpError(HTTP_CONFLICT, e.message);
+    }
+    throw e;
+  }
+  res.send(persona);
+}, 'update')
+.pathParam('key', keySchema)
+.body(joi.object().description('The data to update the persona with.'))
+.response(Persona, 'The updated persona.')
+.summary('Update a persona')
+.description(dd`
+  Create and patch a persona with the request body and
+  returns the updated document. 
+`);
+//**/
 
 router.get(':key', function (req, res) {
   const key = req.pathParams.key;
