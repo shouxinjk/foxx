@@ -24,7 +24,6 @@ module.exports = router;
 
 router.tag('persona');
 
-/**
 router.get(function (req, res) {
   res.send(personas.all());
 }, 'list')
@@ -33,7 +32,6 @@ router.get(function (req, res) {
 .description(dd`
   Retrieves a list of all personas.
 `);
-//**/
 
 /**
 router.post(function (req, res) {
