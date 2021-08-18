@@ -1,7 +1,7 @@
 'use strict';
 const db = require('@arangodb').db;
 const documentCollections = [
-  "platform_categories"
+  "platform_categories","category_categories"
 ];
 const edgeCollections = [];
 

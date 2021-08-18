@@ -70,18 +70,18 @@ router.post(':key', function (req, res) {
   const key = req.pathParams.key;
   const patchData = req.body;
   let persona;
-  //step 1:create blank doc
+  //step 1:query doc by _key
+  //create blank doc if not exists
   try {
-    personas.save({//新建时只能包含 _key 一个字段
-      _key:key
-    },{//必须先创建完成
-      waitForSync: true
-    });
+    persona = personas.document(key);
   } catch (e) {
-    if (e.isArangoError && e.errorNum === ARANGO_DUPLICATE) {
-      throw httpError(HTTP_CONFLICT, e.message);
+    if (e.isArangoError && e.errorNum === ARANGO_NOT_FOUND) {//create new doc if not exists
+      personas.save({//新建时只能包含 _key 一个字段
+        _key:key
+      },{//必须先创建完成
+        waitForSync: true
+      });
     }
-    throw e;
   }
 
   //step 2:update doc

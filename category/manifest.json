@@ -1,7 +1,7 @@
 {
-    "name": "category-labeling",
+    "name": "category-management",
     "version": "0.0.1",
-    "description": "Platform categories operation",
+    "description": "Categories operation",
     "engines": {
         "arangodb": "^3.0.0"
     },
