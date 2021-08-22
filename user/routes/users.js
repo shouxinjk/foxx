@@ -23,7 +23,7 @@ module.exports = router;
 
 router.tag('user');
 
-/**
+
 router.get(function (req, res) {
   res.send(users.all());
 }, 'list')
