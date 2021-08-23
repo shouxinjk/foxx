@@ -84,7 +84,7 @@ router.post(':key', function (req, res) {
 
   //step 2:update doc
   try {
-    personas.update(key, patchData);
+    personas.update(key, patchData,{keepNull: false});
     persona = personas.document(key);
   } catch (e) {
     if (e.isArangoError && e.errorNum === ARANGO_NOT_FOUND) {
@@ -166,7 +166,7 @@ router.patch(':key', function (req, res) {
   const patchData = req.body;
   let persona;
   try {
-    personas.update(key, patchData);
+    personas.update(key, patchData,{keepNull: false});
     persona = personas.document(key);
   } catch (e) {
     if (e.isArangoError && e.errorNum === ARANGO_NOT_FOUND) {
