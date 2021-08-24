@@ -142,6 +142,49 @@ router.patch(':key', function (req, res) {
 `);
 
 /**
+* 根据categoryId更新 satisify设置。
+* 注意需要设置 keepNull为false，对于删除的记录直接删除
+* {
+*   category:{
+*     needs:{
+*        needkey:weight
+*     }
+*   }
+* }
+*/
+router.patch('needs/:category', function (req, res) {
+  const categoryId = req.pathParams.category;
+  const data = req.body;
+  let stuff;
+  var result = {
+    result:"success",
+    msg:"satisifies are changed.",
+    data:data
+  }
+  var query = aql`
+              FOR doc IN my_stuff 
+              UPDATE doc with {status:{satisify:"pending"}} in my_stuff 
+              FILTER doc.meta.category==${categoryId}
+              RETURN NEW
+              `;            
+  try {
+    stuff = db._query(query).toArray();
+  } catch (e) {
+    throw e;
+  }
+  result.stuff = stuff;
+  res.send(result);
+}, 'update')
+.pathParam('category', keySchema)
+.body(joi.object().description('The data to update the stuff with.'))
+.response(Stuff, 'The updated stuff.')
+.summary('Update stuff by needs fulfillment.')
+.description(dd`
+  Update stuff satisify status by category.
+  returns the updated document.
+`);
+
+/**
 router.delete(':key', function (req, res) {
   const key = req.pathParams.key;
   try {
