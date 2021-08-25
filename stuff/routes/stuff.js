@@ -37,6 +37,32 @@ router.get(function (req, res) {
 `);
 //**/
 
+//list pending-index items and update status.index to ready
+router.get('pending-index', function (req, res) {
+  const data = req.body;
+  let stuff;
+  var query = aql`
+              FOR doc IN my_stuff 
+              UPDATE doc with {status:{index:"ready"}} in my_stuff 
+              FILTER doc.status.index=="pending" 
+              LIMIT 50 
+              RETURN doc
+              `;            
+  try {
+    stuff = db._query(query).toArray();
+  } catch (e) {
+    throw e;
+  }
+  res.send(stuff);
+}, 'update')
+//.body(joi.object().description('Result count required in format {count:number}. number must between 1-200.'))
+.response([Stuff], 'Stuff that pending index.')
+.summary('Retrieve stuff by status.index==pending.')
+.description(dd`
+  Retrieve stuff by status.index==pending.
+  returns pending index document.
+`);
+
 router.post(function (req, res) {
   const stuff = req.body;
   let meta;
