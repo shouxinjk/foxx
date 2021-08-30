@@ -1,5 +1,7 @@
 'use strict';
 const dd = require('dedent');
+const db = require('@arangodb').db;
+const aql = require('@arangodb').aql;
 const joi = require('joi');
 const httpError = require('http-errors');
 const status = require('statuses');
@@ -31,6 +33,30 @@ router.get(function (req, res) {
 .summary('List all personas')
 .description(dd`
   Retrieves a list of all personas.
+`);
+
+//根据达人ID加载所有创建的画像
+router.get('broker/:brokerId',function (req, res) {
+  const brokerId = req.pathParams.brokerId;
+  let result
+  var query = aql`
+              for doc 
+              in persona_personas 
+              filter doc.broker==${brokerId}
+              return doc
+              `;            
+  try {
+    result = db._query(query).toArray();
+  } catch (e) {
+    throw e;
+  }
+  res.send(result);
+}, 'list')
+.pathParam('brokerId', keySchema)
+.response([Persona], 'A list of personas.')
+.summary('List all personas created by broker')
+.description(dd`
+  Retrieves a list of personas created by specified broker.
 `);
 
 /**
