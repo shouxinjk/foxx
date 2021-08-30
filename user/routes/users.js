@@ -1,5 +1,7 @@
 'use strict';
 const dd = require('dedent');
+const db = require('@arangodb').db;
+const aql = require('@arangodb').aql;
 const joi = require('joi');
 const httpError = require('http-errors');
 const status = require('statuses');
@@ -31,6 +33,36 @@ router.get(function (req, res) {
 .summary('List all users')
 .description(dd`
   Retrieves a list of all users.
+`);
+
+//根据用户查询关心的人。是一个图查询，以当前用户为起点查询所有关联用户，默认限制返回100条
+router.get("connections/:fromUser",function (req, res) {
+  const fromUser = "user_users/"+req.pathParams.fromUser;
+  let conns;
+  let relatedUsers=[];
+  var query = aql`
+FOR v, e, p IN 1 OUTBOUND ${fromUser} GRAPH 'FriendsGraph'
+LIMIT 100
+RETURN { vertices: p.vertices[1], edges: p.edges[0].name }
+              `;            
+  try {
+    //console.log("try query.[from]",fromUser);
+    conns = db._query(query).toArray();
+    for(var i=0;i<conns.length;i++){
+      var relatedUser = conns[i].vertices;
+      relatedUser.relationship = conns[i].edges;
+      relatedUsers.push(relatedUser);
+    }
+  } catch (e) {
+    throw e;
+  }
+  res.send(relatedUsers);
+}, 'list')
+.pathParam('fromUser', keySchema)
+.response([User], 'A list of related users.')
+.summary('List related users')
+.description(dd`
+  Retrieves related users connected to [fromUser]. Limit to 100.
 `);
 
 //create blank doc with pure _key
