@@ -43,8 +43,8 @@ router.get('pending-index', function (req, res) {
   let stuff;
   var query = aql`
               FOR doc IN my_stuff 
+              FILTER doc.status.index=="pending"               
               UPDATE doc with {status:{index:"ready"}} in my_stuff 
-              FILTER doc.status.index=="pending" 
               LIMIT 50 
               RETURN doc
               `;            
@@ -189,8 +189,8 @@ router.patch('needs/:category', function (req, res) {
   }
   var query = aql`
               FOR doc IN my_stuff 
+              FILTER doc.meta.category==${categoryId}              
               UPDATE doc with {status:{satisify:"pending"}} in my_stuff 
-              FILTER doc.meta.category==${categoryId}
               RETURN NEW
               `;            
   try {
@@ -238,6 +238,7 @@ router.delete(':key', function (req, res) {
   new: 新mappingId //required
 }
 */
+/**
 router.patch('mapping/category', function (req, res) {
   const data = req.body;
   var result = {
@@ -253,8 +254,8 @@ router.patch('mapping/category', function (req, res) {
     let stuff;
     var query = aql`
                 FOR doc IN my_stuff 
-                UPDATE doc with {mappingId:${data.new}} in my_stuff 
                 FILTER doc.mappingId==${data.old} and doc.source==${data.source}
+                UPDATE doc with {mappingId:${data.new}} in my_stuff 
                 RETURN NEW
                 `;            
     try {
@@ -267,8 +268,58 @@ router.patch('mapping/category', function (req, res) {
   }
 }, 'update')
 .body(joi.object().description('The new mappingId and old mappingId.'))
-.response(Category, 'The updated stuff.')
+.response(Stuff, 'The updated stuff.')
 .summary('Change mappingId of stuff.')
 .description(dd`
   Batch change stuff with new mappingId.
+  old: old meta.category
+  new: new meta.category
+  source: platform
+`);
+//**/
+
+/*
+根据source、category批量跟新meta.category。参数：
+{
+  source: 来源,     //required
+  category: 原始类目名称,//required  不传或为null则直接跳过
+  mappingId: 映射的标准类目ID //required
+}
+*/
+router.patch('mapping/category', function (req, res) {
+  const data = req.body;
+  var result = {
+    result:"success",
+    msg:"meta category changed.",
+    data:data
+  }
+  if(!data.source || !data.category || !data.mappingId){//stop processing and return
+    data.msg = "All source/category/mappingId are required.Please check again.";
+    data.result = "error";
+    res.send(result);
+  }else{
+    let stuff;
+    var query = aql`
+                FOR doc IN my_stuff 
+                FILTER doc.category==${data.category} and doc.source==${data.source}
+                UPDATE doc with {meta:{category:${data.mappingId}},status:{load:"pending",classify:"ready"}} in my_stuff 
+                RETURN NEW
+                `;            
+    try {
+      stuff = db._query(query).toArray();
+    } catch (e) {
+      throw e;
+    }
+    result.stuff = stuff;
+    res.send(result);
+  }
+}, 'update')
+.body(joi.object().description('Batch update meta category by source and category name.'))
+.response(Stuff, 'The updated stuff.')
+.summary('Batch update meta.catgory of stuff.')
+.description(dd`
+  Batch change stuff.meta.category with mappingId.
+  source: platform
+  category: original category name
+  mappingId: ilife standard category id
 `);
