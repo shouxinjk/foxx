@@ -276,13 +276,13 @@ router.post('mapping', function (req, res) {
   const data = req.body;
   console.log("try to retrieve category mapping.",data);
   var result = {
-    result:"success",
+    success:false,
     msg:"platform category mapping retrieved",
     data:data
   }
   if(!data.source || !data.name){//stop processing and return
     data.msg = "All source/name are required.Please check again.";
-    data.result = "error";
+    data.success = false;
     res.send(result);
   }else{
     //对name参数进行处理：可能是单个字符串、空格分隔字符串、字符串数组。对于
@@ -299,7 +299,8 @@ router.post('mapping', function (req, res) {
     let platform_category;
     var query = aql`
                 FOR doc IN platform_categories 
-                FILTER doc.source==${data.source} and (doc.name==${name} or ${names} ALL IN doc.names)
+                FILTER doc.source==${data.source} and (doc.name==${name} or ${names} ALL IN doc.names) 
+                LIMIT 1 
                 RETURN doc
                 `;            
     try {
@@ -307,7 +308,9 @@ router.post('mapping', function (req, res) {
     } catch (e) {
       throw e;
     }
-    result.data = platform_category;
+
+    result.success = true;
+    result.data = platform_category;      
     res.send(result);
   }
 }, 'check-mapping')
