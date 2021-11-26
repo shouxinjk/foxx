@@ -269,3 +269,56 @@ router.patch('mapping', function (req, res) {
   mappingId: standard category Id.
   mappingName: standard category name.
 `);
+
+
+//根据source、name查询mappingId、mappingName
+router.post('mapping', function (req, res) {
+  const data = req.body;
+  console.log("try to retrieve category mapping.",data);
+  var result = {
+    result:"success",
+    msg:"platform category mapping retrieved",
+    data:data
+  }
+  if(!data.source || !data.name){//stop processing and return
+    data.msg = "All source/name are required.Please check again.";
+    data.result = "error";
+    res.send(result);
+  }else{
+    //对name参数进行处理：可能是单个字符串、空格分隔字符串、字符串数组。对于
+    var name="";
+    var names=[];
+    if(Array.isArray(data.name)){
+      name = data.name[data.name.length-1];
+      names = data.name;
+    }else{
+      name = data.name;
+      names = data.name.split(" ");
+    }
+
+    let platform_category;
+    var query = aql`
+                FOR doc IN platform_categories 
+                FILTER doc.source==${data.source} and (doc.name==${name} or ${names} ALL IN doc.names)
+                RETURN doc
+                `;            
+    try {
+      platform_category = db._query(query).toArray();
+    } catch (e) {
+      throw e;
+    }
+    result.data = platform_category;
+    res.send(result);
+  }
+}, 'check-mapping')
+.body(joi.object().description('The data to retrieve category mapping with source/name.'))
+.response(Platform_category, 'The platform_category mapping retrieved.')
+.summary('Retrieve category mapping by category name and source.')
+.description(dd`
+  Retrieve category mapping.
+  source: platform.
+  name: original catgory name. can be string/blank-seperated-string/string-array
+`);
+
+
+
