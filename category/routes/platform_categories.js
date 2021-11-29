@@ -65,6 +65,51 @@ router.post(function (req, res) {
 `);
 //**/
 
+//create a new platform_category with full attributes
+router.post(function (req, res) {
+  const json = req.body;
+
+  //create meta doc
+  var metaObj = {
+  	_key:json._key
+  };
+  let meta;
+  try {
+    meta = platform_categories.save(metaObj);
+  } catch (e) {
+    if (e.isArangoError && e.errorNum === ARANGO_DUPLICATE) {
+      throw httpError(HTTP_CONFLICT, e.message);
+    }
+    throw e;
+  }
+  //Object.assign(metaObj, meta);
+
+  //update with req body
+  let platform_category
+  try {
+    platform_categories.update(json._key, json);
+    platform_category = platform_categories.document(json._key);
+  } catch (e) {
+    if (e.isArangoError && e.errorNum === ARANGO_NOT_FOUND) {
+      throw httpError(HTTP_NOT_FOUND, e.message);
+    }
+    if (e.isArangoError && e.errorNum === ARANGO_CONFLICT) {
+      throw httpError(HTTP_CONFLICT, e.message);
+    }
+    throw e;
+  }
+  res.send(platform_category);
+}, 'create')
+//.body(Platform_category, 'The platform_category to create.')
+.body(joi.object().description('The platform_category to create.'))
+.response(201, Platform_category, 'The created platform_category.')
+.error(HTTP_CONFLICT, 'The platform_category already exists.')
+.summary('Create a new platform_category')
+.description(dd`
+  Creates a new platform_category from the request body and
+  returns the saved document.
+`);
+
 router.get(':key', function (req, res) {
   const key = req.pathParams.key;
   let platform_category
