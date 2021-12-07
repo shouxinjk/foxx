@@ -78,9 +78,8 @@ router.post(function (req, res) {
     meta = platform_categories.save(metaObj);
   } catch (e) {
     if (e.isArangoError && e.errorNum === ARANGO_DUPLICATE) {
-      throw httpError(HTTP_CONFLICT, e.message);
+ 		platform_categories.update(json._key, json);//update doc if exists
     }
-    throw e;
   }
   //Object.assign(metaObj, meta);
 
