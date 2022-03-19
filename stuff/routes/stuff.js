@@ -26,6 +26,7 @@ module.exports = router;
 
 router.tag('stuff');
 
+//列出所有商品：禁用
 /**
 router.get(function (req, res) {
   res.send(stuffItems.all());

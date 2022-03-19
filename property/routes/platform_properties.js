@@ -26,6 +26,83 @@ module.exports = router;
 
 router.tag('platform_property');
 
+//list pending sync items
+//读取已映射目录，并同步到mod_property_mapping便于分析映射
+router.get('pending-sync', function (req, res) {
+  const data = req.body;
+  let platform_property;
+  var query = aql`
+              FOR doc IN platform_properties  
+              FILTER doc.status=="pending" and doc.mappingId != null             
+              UPDATE doc with {status:"ready"} in platform_properties 
+              LIMIT 500 
+              RETURN doc
+              `;            
+  try {
+    platform_property = db._query(query).toArray();
+  } catch (e) {
+    throw e;
+  }
+  res.send(platform_property);
+}, 'update')
+//.body(joi.object().description('Result count required in format {count:number}. number must between 1-200.'))
+.response([platform_property], '3rd-party property mapping that pending sync.')
+.summary('Retrieve 3rd party property mapping by status==pending.')
+.description(dd`
+  Retrieve 3rd party property mapping by status==pending.
+  returns pending sync documents.
+`);
+
+//append new property mapping doc
+//增加新的属性映射记录，如果已经存在则直接忽略。否则写入
+router.post('append', function (req, res) {
+  const json = req.body;
+  let platform_property
+  try {
+    //直接查询，如果有就结束了
+    platform_property = platform_properties.document(json._key);
+  } catch (e) {
+    if (e.isArangoError && e.errorNum === ARANGO_NOT_FOUND) {
+      //如果没有则新建一个
+      var metaObj = {
+        _key:json._key
+      };
+      let meta;
+      try {
+        meta = platform_properties.save(metaObj);
+      } catch (e) {
+        if (e.isArangoError && e.errorNum === ARANGO_DUPLICATE) {
+          //do nothing
+        }
+      }
+      //用其他属性更新    
+      try {
+        platform_properties.update(json._key, json);
+        platform_property = platform_properties.document(json._key);
+      } catch (e) {
+        if (e.isArangoError && e.errorNum === ARANGO_NOT_FOUND) {
+          throw httpError(HTTP_NOT_FOUND, e.message);
+        }
+        if (e.isArangoError && e.errorNum === ARANGO_CONFLICT) {
+          throw httpError(HTTP_CONFLICT, e.message);
+        }
+        throw e;
+      }        
+    }
+  }
+  res.send(platform_property);
+}, 'append')
+//.body(platform_property, 'The platform_property to append.')
+.body(joi.object().description('The platform_property to append.'))
+.response(201, platform_property, 'The append platform_property.')
+.error(HTTP_CONFLICT, 'The platform_property already exists.')
+.summary('Append platform_property')
+.description(dd`
+  Append platform_property from the request body and
+  returns the saved document.
+`);
+
+
 /**
 router.get(function (req, res) {
   res.send(platform_properties.all());

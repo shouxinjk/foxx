@@ -24,7 +24,8 @@ module.exports = router;
 
 router.tag('property');
 
-
+//列出所有属性：禁用
+/**
 router.get(function (req, res) {
   res.send(properties.all());
 }, 'list')
@@ -33,7 +34,7 @@ router.get(function (req, res) {
 .description(dd`
   Retrieves a list of all properties.
 `);
-
+//**/
 
 router.post(function (req, res) {
   const property = req.body;

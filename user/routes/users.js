@@ -25,7 +25,8 @@ module.exports = router;
 
 router.tag('user');
 
-
+//列出所有用户：禁用
+/**
 router.get(function (req, res) {
   res.send(users.all());
 }, 'list')
@@ -34,6 +35,7 @@ router.get(function (req, res) {
 .description(dd`
   Retrieves a list of all users.
 `);
+//**/
 
 //根据用户查询关心的人。是一个图查询，以当前用户为起点查询所有关联用户，默认限制返回100条
 router.get("connections/:fromUser",function (req, res) {
@@ -50,8 +52,12 @@ RETURN { vertices: p.vertices[1], edges: p.edges[0].name }
     conns = db._query(query).toArray();
     for(var i=0;i<conns.length;i++){
       var relatedUser = conns[i].vertices;
-      relatedUser.relationship = conns[i].edges;
-      relatedUsers.push(relatedUser);
+      if(relatedUser){
+        relatedUser.relationship = conns[i].edges;
+        relatedUsers.push(relatedUser);
+      }else{
+        //unknown reason: relatedUser is null
+      }
     }
   } catch (e) {
     throw e;
